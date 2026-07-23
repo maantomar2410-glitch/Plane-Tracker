@@ -1,0 +1,45 @@
+import math
+import matplotlib.pyplot as plt
+
+class Aircraft:
+    def __init__(self, M, F):
+        self.M        = M
+        self.F        = F
+        self.t        = 0
+        self.rho_ini  = 1.225
+        self.height   = 0
+        self.u        = 2.8      # kg/s fuel burn at sea level (corrected)
+        self.v        = 0
+        self.A        = 122.4
+        self.g        = 9.81
+
+    def takeoff(self):
+        dt         = 0.01
+        Crr        = 0.030
+        spool_time = 10.0
+        F_takeoff  = 200000      # derated flex thrust at BOM
+
+        alpha_ground = math.radians(4)
+        Cl = min(0.5 + 5.2 * alpha_ground, 2.5)
+        Cd = 0.08 + 0.05 * Cl**2
+
+        Vr     = ((2 * self.M * self.g) /
+                  (self.rho_ini * 1.54 * self.A)) ** 0.5
+        runway = 0
+
+        while self.v < Vr:
+            if self.t < spool_time:
+                thrust = F_takeoff * (0.07 + 0.93 * (self.t / spool_time))
+            else:
+                thrust = F_takeoff
+
+            lift     = 0.5 * self.rho_ini * self.v**2 * Cl * self.A
+            drag     = 0.5 * self.rho_ini * self.v**2 * Cd * self.A
+            N        = self.M * self.g - lift
+            friction = Crr * N
+            acc      = (thrust - drag - friction) / self.M
+
+            self.v  += acc * dt
+            runway  += self.v * dt
+            self.t  += dt
+            self.M  -= self.u * dt
