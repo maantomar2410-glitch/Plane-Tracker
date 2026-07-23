@@ -1,5 +1,18 @@
 import math
 import matplotlib.pyplot as plt
+WAYPOINTS = [
+    ("ANOLI",  19.15,   72.87,   2100),
+    ("XOPAL",  19.80,   72.90,   4572),
+    ("KAMOL",  20.80,   73.10,   7620),
+    ("ASOGA",  21.90,   73.50,  10668),
+    ("OPULA",  23.00,   73.80,  10668),
+    ("GIRDA",  24.50,   74.50,  10668),
+    ("SAVLA",  26.00,   75.20,  10668),
+    ("MAKOL",  27.20,   76.00,  10668),
+    ("NIKAD",  27.80,   76.50,   4000),
+    ("IGARI",  28.30,   76.90,   1500),
+    ("VIDP",   28.5665, 77.1031,    0),
+]
 
 class Aircraft:
     def __init__(self, M, F):
@@ -12,6 +25,12 @@ class Aircraft:
         self.v        = 0
         self.A        = 122.4
         self.g        = 9.81
+        self.lat      = 18.8975
+        self.lon      = 72.8744
+        self.heading  = 358.7
+
+    def get_rho(self):
+        return self.rho_ini * (1 - 0.000022 * self.height) ** 4.2559
 
     def takeoff(self):
         dt         = 0.01
