@@ -32,6 +32,13 @@ class Aircraft:
     def get_rho(self):
         return self.rho_ini * (1 - 0.000022 * self.height) ** 4.2559
 
+    def get_thrust(self, throttle):
+        rho          = self.get_rho()
+        thrust_lapse = (rho / self.rho_ini) ** 0.8
+        return self.F * throttle * thrust_lapse
+
+
+
     def takeoff(self):
         dt         = 0.01
         Crr        = 0.030
@@ -62,3 +69,23 @@ class Aircraft:
             runway  += self.v * dt
             self.t  += dt
             self.M  -= self.u * dt
+
+            print(f"[TAKEOFF DONE]")
+            print(f"  Vr     = {self.v:.1f} m/s ({self.v*1.944:.0f} knots)")
+            print(f"  Runway = {runway:.0f} m")
+            print(f"  Time   = {self.t:.1f} s")
+            return [self.v, self.M, self.t, runway]
+
+    def initial_climb(self, theta=15, manual_ceil=305):
+        ans      = self.takeoff()
+        Vx, M, t = ans[0], ans[1], ans[2]
+        dt       = 0.01
+        Vy       = 0
+        dist     = 0
+        angle    = 11.5  # pitch angle just after lift
+
+        while self.height < manual_ceil:
+            rho   = self.get_rho()
+            v     = math.sqrt(Vx**2 + Vy**2)
+            gamma = math.atan2(Vy, Vx)
+            alpha = math.radians(angle) - gamma
