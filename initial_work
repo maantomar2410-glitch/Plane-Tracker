@@ -32,10 +32,36 @@ class Aircraft:
     def get_rho(self):
         return self.rho_ini * (1 - 0.000022 * self.height) ** 4.2559
 
+    def speed_of_sound(self):
+        T = max(288.15 - 0.0065 * self.height, 216.65)
+        return math.sqrt(1.4 * 287 * T)
+
     def get_thrust(self, throttle):
         rho          = self.get_rho()
         thrust_lapse = (rho / self.rho_ini) ** 0.8
         return self.F * throttle * thrust_lapse
+
+    def get_aero_coefficients(self, alpha, v):
+        if  v < 85:
+            Cd0, Cl0, Cl_a, k, Cl_max = 0.045, 1.0,  5.2, 0.050, 2.5
+        elif v < 95:
+            Cd0, Cl0, Cl_a, k, Cl_max = 0.035, 0.8,  5.4, 0.048, 2.2
+        elif v < 105:
+            Cd0, Cl0, Cl_a, k, Cl_max = 0.025, 0.55, 5.6, 0.046, 1.9
+        else:
+            Cd0, Cl0, Cl_a, k, Cl_max = 0.0175, 0.25, 5.7, 0.045, 1.5
+
+        Cl = min(Cl0 + Cl_a * alpha, Cl_max)
+
+        mach = v / self.speed_of_sound()
+        if mach > 0.3:
+            PG = 1 / math.sqrt(max(1 - mach**2, 0.01))
+            Cl = min(Cl * PG, Cl_max)
+        if mach > 0.75:
+            Cd0 += 20 * (mach - 0.75) ** 4
+
+        Cd = Cd0 + k * Cl**2
+        return Cl, Cd, mach
 
 
 
@@ -76,7 +102,7 @@ class Aircraft:
             print(f"  Time   = {self.t:.1f} s")
             return [self.v, self.M, self.t, runway]
 
-    def initial_climb(self, theta=15, manual_ceil=305):
+    def initial_climb(self, theta=15, manual_ceil=305):  # manual climbing
         ans      = self.takeoff()
         Vx, M, t = ans[0], ans[1], ans[2]
         dt       = 0.01
@@ -89,3 +115,6 @@ class Aircraft:
             v     = math.sqrt(Vx**2 + Vy**2)
             gamma = math.atan2(Vy, Vx)
             alpha = math.radians(angle) - gamma
+
+            Cl, Cd, mach = self.get_aero_coefficients(alpha, v)
+            thrust = self.get_thrust(throttle=1.0)
