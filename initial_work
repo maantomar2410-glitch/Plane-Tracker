@@ -41,6 +41,16 @@ class Aircraft:
         thrust_lapse = (rho / self.rho_ini) ** 0.8
         return self.F * throttle * thrust_lapse
 
+    def get_vx_limit(self):
+        if self.height < 3048:
+            return 128.6                        # 250kt below 10000ft
+        elif self.height < 4000:
+                                                # gradual acceleration 10000ft -> 13000ft
+            ratio = (self.height - 3048) / (4000 - 3048)
+            return 128.6 + ratio * (231.0 - 128.6)
+        else:
+            return 231.0                        # Mach 0.78 cruise speed
+
     def get_aero_coefficients(self, alpha, v):
         if  v < 85:
             Cd0, Cl0, Cl_a, k, Cl_max = 0.045, 1.0,  5.2, 0.050, 2.5
@@ -62,6 +72,11 @@ class Aircraft:
 
         Cd = Cd0 + k * Cl**2
         return Cl, Cd, mach
+
+
+    def update_position(self, dist_m, heading_deg):
+        R   = 6371000
+        hdg = math.radians(heading_deg)
 
 
 
@@ -118,3 +133,15 @@ class Aircraft:
 
             Cl, Cd, mach = self.get_aero_coefficients(alpha, v)
             thrust = self.get_thrust(throttle=1.0)
+
+            L = 0.5 * rho * v**2 * Cl_turn * self.A
+            D = 0.5 * rho * v**2 * Cd_turn * self.A
+            sine = math.sin(math.radians(angle))
+            cos  = math.cos(math.radians(angle))
+            acc_x = (thrust*cos - L*math.sin(gamma) - D*math.cos(gamma)) / M
+            acc_y = (thrust*sine + L*math.cos(gamma)/n
+                     - M*self.g - D*math.sin(gamma)) / M
+            Vx_new = Vx + acc_x * dt
+            Vy_new = Vy + acc_y * dt
+            
+
