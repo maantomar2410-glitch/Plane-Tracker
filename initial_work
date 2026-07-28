@@ -77,6 +77,11 @@ class Aircraft:
     def update_position(self, dist_m, heading_deg):
         R   = 6371000
         hdg = math.radians(heading_deg)
+        d_lat = (dist_m * math.cos(hdg)) / R
+        d_lon = (dist_m * math.sin(hdg)) / (
+                 R * math.cos(math.radians(self.lat)))
+        self.lat += math.degrees(d_lat)
+        self.lon += math.degrees(d_lon)
 
 
 
@@ -143,5 +148,18 @@ class Aircraft:
                      - M*self.g - D*math.sin(gamma)) / M
             Vx_new = Vx + acc_x * dt
             Vy_new = Vy + acc_y * dt
+
+            if Vx_new > self.get_vx_limit():
+                Vx_new = self.get_vx_limit()
+            Vx = Vx_new
+            Vy = Vy_new
+            self.height += Vy * dt
+            dist        += Vx * dt
+
+            t += dt
+            M -= self.u * (rho / self.rho_ini)**0.85 * dt
+
+            if angle < theta:
+                angle += 0.02
             
 
