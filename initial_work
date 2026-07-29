@@ -83,6 +83,15 @@ class Aircraft:
         self.lat += math.degrees(d_lat)
         self.lon += math.degrees(d_lon)
 
+    def get_bearing(self, target_lat, target_lon):
+        lat1 = math.radians(self.lat)
+        lat2 = math.radians(target_lat)
+        dlon = math.radians(target_lon - self.lon)
+        x    = math.sin(dlon) * math.cos(lat2)
+        y    = (math.cos(lat1) * math.sin(lat2) -
+                math.sin(lat1) * math.cos(lat2) * math.cos(dlon))
+        return (math.degrees(math.atan2(x, y)) + 360) % 360
+
 
 
     def takeoff(self):
@@ -138,6 +147,22 @@ class Aircraft:
 
             Cl, Cd, mach = self.get_aero_coefficients(alpha, v)
             thrust = self.get_thrust(throttle=1.0)
+
+            target_heading = self.get_bearing(*WAYPOINTS[0][1:3])
+            phi_deg = self.get_bank_angle(target_heading)
+            phi     = math.radians(abs(phi_deg))
+            if phi > 0 :
+                n = 1 / math.cos(phi)
+            else:
+                n=1.0
+
+
+            heading_error = target_heading - self.heading
+            if heading_error > 180:
+                heading_error -= 360
+            if heading_error < -180:
+                heading_error += 360
+
 
             L = 0.5 * rho * v**2 * Cl_turn * self.A
             D = 0.5 * rho * v**2 * Cd_turn * self.A
