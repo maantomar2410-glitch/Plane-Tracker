@@ -92,6 +92,31 @@ class Aircraft:
                 math.sin(lat1) * math.cos(lat2) * math.cos(dlon))
         return (math.degrees(math.atan2(x, y)) + 360) % 360
 
+    def get_bank_angle(self, target_heading):
+        error = target_heading - self.heading
+
+        if error > 180:
+            error = error - 360
+        if error < -180:
+            error = error + 360
+
+        if self.height < 120:
+            return 0
+
+        if abs(error) < 5:
+            return 0
+
+        if self.height < 300:
+            bank = 15      # gentle bank below 1000ft
+        else:
+            bank = 25      # standard bank above 1000ft
+
+        #  bank right if target is clockwise, left if anticlockwise
+        if error > 0:
+            return bank
+        else:
+            return -bank
+
 
 
     def takeoff(self):
@@ -162,6 +187,19 @@ class Aircraft:
                 heading_error -= 360
             if heading_error < -180:
                 heading_error += 360
+
+            if phi > 0:
+                omega     = self.g * math.tan(phi) / max(v, 1.0)   # rad/s
+                rate_deg  = math.degrees(omega)
+                turn_step = min(abs(heading_error), rate_deg * dt)
+            else:
+                turn_step = 0
+
+            self.heading = (self.heading +
+                math.copysign(turn_step, heading_error) + 360) % 360
+
+            Cl_turn = min(Cl * n, 2.2)
+            Cd_turn = 0.035 + 0.048 * Cl_turn**2
 
 
             L = 0.5 * rho * v**2 * Cl_turn * self.A
