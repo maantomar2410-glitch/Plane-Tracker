@@ -92,6 +92,18 @@ class Aircraft:
                 math.sin(lat1) * math.cos(lat2) * math.cos(dlon))
         return (math.degrees(math.atan2(x, y)) + 360) % 360
 
+    def get_distance_to(self, target_lat, target_lon):   # will get distance between waypoints 
+        R    = 6371000
+        lat1 = math.radians(self.lat)
+        lat2 = math.radians(target_lat)
+        dlon = math.radians(target_lon - self.lon)
+        dlat = lat2 - lat1
+        a    = (math.sin(dlat/2)**2 +
+                math.cos(lat1) * math.cos(lat2) *
+                math.sin(dlon/2)**2)
+        return R * 2 * math.asin(math.sqrt(max(a, 0)))
+
+
     def get_bank_angle(self, target_heading):
         error = target_heading - self.heading
 
@@ -218,6 +230,9 @@ class Aircraft:
             Vy = Vy_new
             self.height += Vy * dt
             dist        += Vx * dt
+
+            self.heading = target_heading
+            self.update_position(Vx * dt, self.heading)
 
             t += dt
             M -= self.u * (rho / self.rho_ini)**0.85 * dt
