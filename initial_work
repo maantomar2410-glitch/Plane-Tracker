@@ -255,9 +255,37 @@ class Aircraft:
 
         angle_deg = math.degrees(math.atan2(Vy, Vx))
 
-# plan is that at the last i will declear a variable for the class of aircraft and the previous function will return height speed etc so state will have all the info of that
+        for wp_name, wp_lat, wp_lon, wp_alt in WAYPOINTS:
+            print(f"\n[NAV] -> {wp_name}  "
+                  f"target_alt={wp_alt}m ({wp_alt*3.28:.0f}ft)  "
+                  f"dist={self.get_distance_to(wp_lat,wp_lon)/1000:.1f}km")
 
+            while self.get_distance_to(wp_lat, wp_lon) > 500:
+                rho = self.get_rho()
+                v   = math.sqrt(Vx**2 + Vy**2)
 
-# stopping due to some issue with the fuel burnt and engine thrust
+                # Heading and bank
+                target_heading = self.get_bearing(wp_lat, wp_lon)
+                phi_deg        = self.get_bank_angle(target_heading)
+                phi            = math.radians(abs(phi_deg))
+                n              = 1 / math.cos(phi) if phi > 0 else 1.0
+
+                # Turn 
+                heading_error = (target_heading - self.heading + 360) % 360
+                if heading_error > 180:
+                    heading_error -= 360
+                turn_step    = min(abs(heading_error), 3.0 * dt)
+                self.heading = (self.heading +
+                                math.copysign(turn_step, heading_error)
+                                + 360) % 360
+
+                # Throttle
+                altitude_error = wp_alt - self.height
+                if self.height < 457:
+                    throttle = 1.0
+                elif self.height < 1524:
+                    ratio    = (self.height - 457) / (1524 - 457)
+
+ 
             
 
