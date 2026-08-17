@@ -285,6 +285,27 @@ class Aircraft:
                     throttle = 1.0
                 elif self.height < 1524:
                     ratio    = (self.height - 457) / (1524 - 457)
+                    throttle = 1.0 - 0.125 * ratio
+                elif altitude_error > 200:
+                    throttle = 0.875     # climbing
+                elif altitude_error < -200:
+                    throttle = 0.07      # descending idle
+                else:
+                    throttle = 0.74      # cruise (corrected from 0.82)
+
+                thrust = self.get_thrust(throttle)
+
+                # Proportional climb-rate controller
+                if altitude_error > 0:
+                    max_Vy = max(2.0, 10.0 * (self.get_rho() / self.rho_ini) ** 0.5)
+                    target_Vy = min(max_Vy, max(1.0, altitude_error * 0.03))
+                else:
+                    target_Vy = max(-12.0, altitude_error * 0.03)
+
+                Vy_error   = target_Vy - Vy
+                angle_deg += 0.15 * Vy_error
+                angle_deg  = max(-3.0, min(angle_deg, 15.0))
+                angle_rad  = math.radians(angle_deg)
 
  
             
