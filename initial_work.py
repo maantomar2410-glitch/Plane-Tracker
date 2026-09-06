@@ -307,6 +307,37 @@ class Aircraft:
                 angle_deg  = max(-3.0, min(angle_deg, 15.0))
                 angle_rad  = math.radians(angle_deg)
 
+                gamma = math.atan2(Vy, Vx)
+                alpha = angle_rad - gamma
+
+                Cl, Cd, mach = self.get_aero_coefficients(alpha, v)
+                Cl_turn = min(Cl * n, 1.5)
+                Cd_turn = 0.0175 + 0.045 * Cl_turn**2
+                L = 0.5 * rho * v**2 * Cl_turn * self.A
+                D = 0.5 * rho * v**2 * Cd_turn * self.A
+
+                sine = math.sin(angle_rad)
+                cos  = math.cos(angle_rad)
+
+                acc_x = (thrust*cos - L*math.sin(gamma)
+                         - D*math.cos(gamma)) / M
+                acc_y = (thrust*sine + L*math.cos(gamma)/n
+                         - M*self.g - D*math.sin(gamma)) / M
+
+                Vx_new = Vx + acc_x * dt
+                Vy_new = Vy + acc_y * dt
+
+                if Vx_new > self.get_vx_limit():
+                    Vx_new = self.get_vx_limit()
+
+                Vx = Vx_new
+                Vy = Vy_new
+                self.height = max(0, self.height + Vy * dt)
+                dist       += Vx * dt
+
+
+
+
  
             
 
