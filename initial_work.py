@@ -333,7 +333,48 @@ class Aircraft:
                 Vx = Vx_new
                 Vy = Vy_new
                 self.height = max(0, self.height + Vy * dt)
-                dist       += Vx * dt
+                dist += Vx * dt
+
+                self.update_position(Vx * dt, self.heading)
+                t += dt
+                M -= self.u * (rho / self.rho_ini)**0.85 * dt
+
+            v    = math.sqrt(Vx**2 + Vy**2)
+            mach = v / self.speed_of_sound()
+            print(f"  Reached {wp_name}")
+            print(f"    Height  = {self.height:.0f}m ({self.height*3.28:.0f}ft)")
+            print(f"    Speed   = {v:.1f}m/s ({v*1.944:.0f}kt)  Mach={mach:.3f}")
+            print(f"    Time    = {t/60:.1f} min")
+            print(f"    Fuel    = {70000-M:.0f} kg burned")
+            print(f"    Lat/Lon = {self.lat:.4f}, {self.lon:.4f}")
+
+        fuel_burned = 70000 - M
+        print(f"\n{'='*50}")
+        print(f"[ARRIVED DEL]")
+        print(f"  Total time  = {t/60:.1f} min")
+        print(f"  Fuel burned = {fuel_burned:.0f} kg")
+        print(f"  Distance    = {dist/1000:.1f} km")
+        print(f"  Final mass  = {M:.0f} kg")
+        print(f"{'='*50}")
+        return [self.height, Vx, Vy, M, t, dist]
+
+if __name__ == "__main__":    # this so that it runs locally and cant be transferred 
+    ac    = Aircraft(M=70000, F=241200)
+    state = ac.initial_climb(theta=15, manual_ceil=305)
+    ac.fly_to_waypoints(state)
+
+    def plot_flight(log):
+        
+        import matplotlib.gridspec as gridspec
+    
+        t       = [r['t']/60      for r in log]   # minutes
+        height  = [r['height']    for r in log]   # metres
+        vx      = [r['Vx']*1.944  for r in log]   # knots
+        vy      = [r['Vy']*196.85 for r in log]   # fpm
+        fuel    = [r['fuel']      for r in log]   # kg burned
+        lat     = [r['lat']       for r in log]
+        lon     = [r['lon']       for r in log]
+        mach    = [r['mach']      for r in log]
 
 
 
